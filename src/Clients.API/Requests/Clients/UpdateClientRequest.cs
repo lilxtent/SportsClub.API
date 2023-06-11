@@ -11,4 +11,6 @@ public class UpdateClientRequest
     public string Patronymic { get; init; }
     
     public DateTime BirthDate { get; init; }
+    
+    public string Phone { get; set; }
 }

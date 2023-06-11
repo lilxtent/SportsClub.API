@@ -9,7 +9,7 @@ using Exception = System.Exception;
 
 namespace Club.Repository.Repositories;
 
-public class ClientsRepository: IClientsRepository
+public class ClientsRepository : IClientsRepository
 {
     private readonly string _connectionString;
     private readonly ILogger _logger;
@@ -24,7 +24,7 @@ public class ClientsRepository: IClientsRepository
 
     public async Task<Client> GetClientById(Guid id, TimeSpan timeout)
     {
-        var sql = 
+        var sql =
             """
             SELECT
                 *
@@ -39,12 +39,12 @@ public class ClientsRepository: IClientsRepository
             await using var connection = new NpgsqlConnection(_connectionString);
 
             await connection.OpenAsync();
-            
+
             var transaction = await connection.BeginTransactionAsync(IsolationLevel.ReadCommitted);
-            
+
             var result = await connection.QuerySingleAsync<Client>(
                 sql,
-                new {id},
+                new { id },
                 transaction,
                 (int)timeout.TotalSeconds);
 
@@ -52,7 +52,7 @@ public class ClientsRepository: IClientsRepository
             {
                 throw new Exception($"Ошибка при попытке получить клиента с id {id}.");
             }
-            
+
             return result;
         }
         catch (NpgsqlException exception)
@@ -65,7 +65,7 @@ public class ClientsRepository: IClientsRepository
 
     public async Task<IEnumerable<Client>> GetClients(ICollection<Guid> ids, TimeSpan timeout)
     {
-        var sql = 
+        var sql =
             $"""
             SELECT
                 *
@@ -80,9 +80,9 @@ public class ClientsRepository: IClientsRepository
             await using var connection = new NpgsqlConnection(_connectionString);
 
             await connection.OpenAsync();
-            
+
             var transaction = await connection.BeginTransactionAsync(IsolationLevel.ReadCommitted);
-            
+
             var result = await connection.QueryAsync<Client>(
                 sql,
                 //new {ids/* = string.Join(',', ids.Select(x => $"'{x}'"))*/},
@@ -93,7 +93,7 @@ public class ClientsRepository: IClientsRepository
             {
                 throw new Exception($"Ошибка при попытке получить клиента с id {string.Join(',', ids)}.");
             }
-            
+
             return result;
         }
         catch (NpgsqlException exception)
@@ -103,10 +103,10 @@ public class ClientsRepository: IClientsRepository
             throw new Exception($"Ошибка при попытке получить клиента с id {string.Join(',', ids)}.");
         }
     }
-    
+
     public async Task<(Client[] Clients, int TotalCount)> GetClients(int skip, int take, TimeSpan timeout)
     {
-        var sql = 
+        var sql =
             """
             SELECT
                 *
@@ -126,14 +126,14 @@ public class ClientsRepository: IClientsRepository
             await using var connection = new NpgsqlConnection(_connectionString);
 
             await connection.OpenAsync();
-            
+
             var transaction = await connection.BeginTransactionAsync(IsolationLevel.ReadCommitted);
 
             await using var command = new NpgsqlCommand(sql, connection, transaction);
-            
+
             var result = await connection.QueryMultipleAsync(
                 sql,
-                new {skip, take},
+                new { skip, take },
                 transaction,
                 (int)timeout.TotalSeconds);
 
@@ -141,7 +141,7 @@ public class ClientsRepository: IClientsRepository
             {
                 throw new Exception("Ошибка при попытке получить клиентов.");
             }
-            
+
             return (result.Read<Client>().ToArray(), result.ReadSingle<int>());
         }
         catch (NpgsqlException exception)
@@ -154,7 +154,7 @@ public class ClientsRepository: IClientsRepository
 
     public async Task<(Client[] Clients, int TotalCount)> Search(ClientsSearchRules searchRules, TimeSpan timeout)
     {
-        var sql = 
+        var sql =
             $"""
             SELECT
                 *
@@ -180,9 +180,9 @@ public class ClientsRepository: IClientsRepository
             await using var connection = new NpgsqlConnection(_connectionString);
 
             await connection.OpenAsync();
-            
+
             var transaction = await connection.BeginTransactionAsync(IsolationLevel.ReadCommitted);
-            
+
             var result = await connection.QueryMultipleAsync(
                 sql,
                 transaction: transaction,
@@ -192,7 +192,7 @@ public class ClientsRepository: IClientsRepository
             {
                 throw new Exception("Ошибка при попытке получить клиентов.");
             }
-            
+
             return (result.Read<Client>().ToArray(), result.ReadSingle<int>());
         }
         catch (NpgsqlException exception)
@@ -200,6 +200,48 @@ public class ClientsRepository: IClientsRepository
             _logger.LogError("Ошибка при попытке получить клиента. Error: {Message}", exception.Message);
 
             throw new Exception("Ошибка при попытке получить клиентов.");
+        }
+    }
+
+    public async Task Add(Client client, TimeSpan timeout)
+    {
+        const string sql = """
+            INSERT INTO "Clients" 
+                (id, surname, name, patronymic, birthdate, phone)
+            VALUES
+                (:id, :surname, :name, :patronymic, :birthdate, :phone)
+            """;
+
+        try
+        {
+            await using var connection = new NpgsqlConnection(_connectionString);
+
+            await connection.OpenAsync();
+
+            var transaction = await connection.BeginTransactionAsync(IsolationLevel.ReadCommitted);
+
+            await connection.ExecuteAsync(
+                sql,
+                new
+                {
+                    client.Id,
+                    client.Surname,
+                    client.Name,
+                    client.Patronymic,
+                    client.BirthDate,
+                    client.Phone
+                },
+                transaction,
+                (int)timeout.TotalSeconds,
+                CommandType.Text);
+
+            await transaction.CommitAsync();
+        }
+        catch (NpgsqlException exception)
+        {
+            _logger.LogError("Ошибка при попытке обновить клиента. Error: {Message}", exception.Message);
+
+            throw new Exception($"Ошибка при попытке обновить клиента с id {client.Id}.");
         }
     }
 
@@ -212,7 +254,8 @@ public class ClientsRepository: IClientsRepository
                 surname = :surname,
                 name = :name,
                 patronymic = :patronymic,
-                birthdate = :birthdate
+                birthdate = :birthdate,
+                phone = :phone
             WHERE
                 id = :id
             """;
@@ -222,10 +265,10 @@ public class ClientsRepository: IClientsRepository
             await using var connection = new NpgsqlConnection(_connectionString);
 
             await connection.OpenAsync();
-            
+
             var transaction = await connection.BeginTransactionAsync(IsolationLevel.ReadCommitted);
-            
-            var result = await connection.ExecuteAsync(
+
+            await connection.ExecuteAsync(
                 sql,
                 new
                 {
@@ -233,7 +276,8 @@ public class ClientsRepository: IClientsRepository
                     client.Surname,
                     client.Name,
                     client.Patronymic,
-                    BirthDate = client.BirthDate
+                    client.BirthDate,
+                    client.Phone
                 },
                 transaction,
                 (int)timeout.TotalSeconds,

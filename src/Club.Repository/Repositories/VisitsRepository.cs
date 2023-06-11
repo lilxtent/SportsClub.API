@@ -28,8 +28,8 @@ public class VisitsRepository : IVisitsRepository
                 *
             FROM
                 "Visits"
-            ORDER BY 
-                datetime
+            ORDER BY  
+                datetime DESC
             LIMIT :take OFFSET :skip;
             
             SELECT COUNT(*) FROM "Visits";

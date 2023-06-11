@@ -2,7 +2,7 @@
 
 public record Client
 {
-    public Guid Id { get; init; }
+    public Guid Id { get; init; } = new();
     
     public string Surname { get; init; }
     
@@ -11,6 +11,8 @@ public record Client
     public string Patronymic { get; init; }
     
     public DateTime BirthDate { get; init; }
+    
+    public string Phone { get; set; }
     
     /*//TODO: перенести в отдельную таблицу?
     public List<string> Phones { get; init; }

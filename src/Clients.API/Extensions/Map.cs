@@ -1,5 +1,4 @@
 ﻿using Clients.API.Mappers;
-using Clients.API.Requests;
 using Clients.API.Requests.Clients;
 using Club.Models.Persons;
 

@@ -13,5 +13,7 @@ public interface IClientsRepository
 
     Task<(Client[] Clients, int TotalCount)> Search(ClientsSearchRules searchRules, TimeSpan timeout);
 
+    Task Add(Client client, TimeSpan timeout);
+    
     Task Update(Client client, TimeSpan timeout);
 }

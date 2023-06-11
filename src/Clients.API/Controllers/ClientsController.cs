@@ -64,6 +64,15 @@ public class ClientsController : ControllerBase
         });
     }
     
+    [HttpPost]
+    [Route("add")]
+    public async Task<ActionResult> SearchClients([FromBody, Required] Client client)
+    {
+        await _clientsRepository.Add(client, 30.Seconds());
+
+        return Ok();
+    }
+    
     [HttpPatch]
     [Route("update")]
     public async Task<ActionResult<Client[]>> UpdateClient([FromBody, Required] UpdateClientRequest request)
