@@ -36,7 +36,7 @@ public static class IServiceCollectionExtensions
     private static IVisitsRepository CreateVisitsRepository(IServiceProvider serviceProvider)
     {
         var settings = serviceProvider.GetService<Settings.Settings>();
-        var logger = serviceProvider.GetService<ILoggerFactory>().CreateLogger<ClientsRepository>();
+        var logger = serviceProvider.GetService<ILoggerFactory>().CreateLogger<VisitsRepository>();
 
         return new VisitsRepository(
             settings.ClientsConnectionString,
@@ -44,10 +44,22 @@ public static class IServiceCollectionExtensions
         );
     }
 
+    private static ISubscriptionsRepository CreateSubscriptionsRepository(IServiceProvider serviceProvider)
+    {
+        var settings = serviceProvider.GetService<Settings.Settings>();
+        var logger = serviceProvider.GetService<ILoggerFactory>().CreateLogger<SubscriptionsRepository>();
+
+        return new SubscriptionsRepository(
+            settings.ClientsConnectionString,
+            logger
+        );
+    }
+    
     private static IServiceCollection AddRepositories(this IServiceCollection serviceCollection)
     {
         return serviceCollection
             .AddSingleton(CreateClientsRepository)
-            .AddSingleton(CreateVisitsRepository);
+            .AddSingleton(CreateVisitsRepository)
+            .AddSingleton(CreateSubscriptionsRepository);
     }
 }

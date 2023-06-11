@@ -1,8 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Clients.API.Extensions;
-using Clients.API.Requests;
 using Clients.API.Requests.Clients;
-using Clients.API.Responses;
 using Clients.API.Responses.Clients;
 using Club.Models.Persons;
 using Club.Repository.Models;
@@ -48,7 +46,7 @@ public class ClientsController : ControllerBase
     
     [HttpGet]
     [Route("search")]
-    public async Task<ActionResult<Client[]>> SearchClients([FromQuery, Required] SearchClientsRequest request)
+    public async Task<ActionResult<SearchClientsResponse>> SearchClients([FromQuery, Required] SearchClientsRequest request)
     {
         var result = await _clientsRepository.Search(
             new ClientsSearchRules
@@ -66,7 +64,7 @@ public class ClientsController : ControllerBase
     
     [HttpPost]
     [Route("add")]
-    public async Task<ActionResult> SearchClients([FromBody, Required] Client client)
+    public async Task<ActionResult> AddClient([FromBody, Required] Client client)
     {
         await _clientsRepository.Add(client, 30.Seconds());
 
@@ -75,7 +73,7 @@ public class ClientsController : ControllerBase
     
     [HttpPatch]
     [Route("update")]
-    public async Task<ActionResult<Client[]>> UpdateClient([FromBody, Required] UpdateClientRequest request)
+    public async Task<ActionResult> UpdateClient([FromBody, Required] UpdateClientRequest request)
     {
         await _clientsRepository.Update(
            request.MapToClient(),
