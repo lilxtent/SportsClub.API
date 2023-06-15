@@ -20,6 +20,48 @@ public class VisitsRepository : IVisitsRepository
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
+    public async Task Add(Guid clientId, TimeSpan timeout)
+    {
+        var sql = 
+            """
+            INSERT INTO "Visits"
+                (clientid, datetime)
+            VALUES 
+                (:clientid, :datetime);
+            """;
+
+        try
+        {
+            await using var connection = new NpgsqlConnection(_connectionString);
+
+            await connection.OpenAsync();
+            
+            var transaction = await connection.BeginTransactionAsync(IsolationLevel.ReadCommitted);
+
+            await using var command = new NpgsqlCommand(sql, connection, transaction);
+            
+            await connection.ExecuteAsync(
+                sql,
+                new
+                {
+                    clientId,
+                    dateTime = DateTime.Now
+                },
+                transaction,
+                (int)timeout.TotalSeconds,
+                CommandType.Text);
+            
+
+            await transaction.CommitAsync();
+        }
+        catch (NpgsqlException exception)
+        {
+            _logger.LogError("Ошибка при попытке получить клиента. Error: {Message}", exception.Message);
+
+            throw new Exception("Ошибка при попытке получить клиентов.");
+        }
+    }
+    
     public async Task<(Visit[] Visits, int TotalCount)> GetLastVisits(int skip, int take, TimeSpan timeout)
     {
         var sql = 

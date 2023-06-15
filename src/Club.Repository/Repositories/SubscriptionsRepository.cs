@@ -62,6 +62,45 @@ public class SubscriptionsRepository : ISubscriptionsRepository
         }
     }
 
+    public async Task<IEnumerable<Subscription>> GetAllSubscriptions(TimeSpan timeout)
+    {
+        var sql =
+            """
+            SELECT
+                *
+            FROM
+                "Subscriptions"
+            """;
+
+        try
+        {
+            await using var connection = new NpgsqlConnection(_connectionString);
+
+            await connection.OpenAsync();
+
+            var transaction = await connection.BeginTransactionAsync(IsolationLevel.ReadCommitted);
+
+            var result = await connection.QueryAsync<Subscription>(
+                sql,
+                new {},
+                transaction,
+                (int)timeout.TotalSeconds);
+
+            if (result is null)
+            {
+                throw new Exception("Ошибка при попытке получить абонементы.");
+            }
+
+            return result;
+        }
+        catch (NpgsqlException exception)
+        {
+            _logger.LogError("Ошибка при попытке получить абонементы. Error: {Message}", exception.Message);
+
+            throw new Exception("Ошибка при попытке получить абонементы.");
+        }
+    }
+    
     public async Task<Subscription> GetSubscriptionById(Guid id, TimeSpan timeout)
     {
         var sql =
@@ -146,6 +185,46 @@ public class SubscriptionsRepository : ISubscriptionsRepository
             _logger.LogError("Ошибка при попытке получить подписки. Error: {Message}", exception.Message);
 
             throw new Exception("Ошибка при попытке получить подписки.");
+        }
+    }
+    
+    public async Task<IEnumerable<Subscription>> GetSubscriptions(ICollection<Guid> ids, TimeSpan timeout)
+    {
+        var sql =
+            $"""
+            SELECT
+                *
+            FROM
+                "Subscriptions"
+            WHERE
+                Id IN ({string.Join(',', ids.Select(x => $"'{x}'"))})
+            """;
+
+        try
+        {
+            await using var connection = new NpgsqlConnection(_connectionString);
+
+            await connection.OpenAsync();
+
+            var transaction = await connection.BeginTransactionAsync(IsolationLevel.ReadCommitted);
+
+            var result = await connection.QueryAsync<Subscription>(
+                sql,
+                transaction: transaction,
+                commandTimeout: (int)timeout.TotalSeconds);
+
+            if (result is null)
+            {
+                throw new Exception($"Ошибка при попытке получить абонемент с id {string.Join(',', ids)}.");
+            }
+
+            return result;
+        }
+        catch (NpgsqlException exception)
+        {
+            _logger.LogError("Ошибка при попытке получить абонемент. Error: {Message}", exception.Message);
+
+            throw new Exception($"Ошибка при попытке получить абонемент с id {string.Join(',', ids)}.");
         }
     }
     

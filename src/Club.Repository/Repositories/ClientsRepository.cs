@@ -85,7 +85,6 @@ public class ClientsRepository : IClientsRepository
 
             var result = await connection.QueryAsync<Client>(
                 sql,
-                //new {ids/* = string.Join(',', ids.Select(x => $"'{x}'"))*/},
                 transaction: transaction,
                 commandTimeout: (int)timeout.TotalSeconds);
 

@@ -32,6 +32,15 @@ public class SubscriptionsController : ControllerBase
     }
     
     [HttpGet]
+    [Route("all")]
+    public async Task<ActionResult<IEnumerable<Subscription>>> GetAllSubscriptions()
+    {
+        var subscriptions = await _subscriptionsRepository.GetAllSubscriptions(30.Seconds());
+
+        return Ok(subscriptions);
+    }
+    
+    [HttpGet]
     [Route("")]
     public async Task<ActionResult<GetSubscriptionsResult>> GetSubscription([FromQuery, Required] GetSubscriptionsRequest request)
     {

@@ -2,6 +2,7 @@
 using Club.Logic.Services.Interfaces;
 using Club.Repository.Repositories;
 using Club.Repository.Repositories.Interfaces;
+using Minio;
 using Newtonsoft.Json;
 
 namespace Clients.API.Extensions;
@@ -13,7 +14,9 @@ public static class IServiceCollectionExtensions
         serviceCollection
             .AddSettings()
             .AddRepositories()
-            .AddSingleton<IVisitsService, VisitsService>();
+            .AddSingleton<IVisitsService, VisitsService>()
+            .AddSingleton<IPaymentsService, PaymentsService>()
+            .AddSingleton(CreateMinioClient());
     }
 
     private static IServiceCollection AddSettings(this IServiceCollection serviceCollection)
@@ -54,12 +57,44 @@ public static class IServiceCollectionExtensions
             logger
         );
     }
+
+    private static IMinioClient CreateMinioClient()
+    {
+        return new MinioClient()
+            .WithEndpoint("localhost:9000/")
+            .WithCredentials("GDSMwruCnxPNM5ad2Azy", "wyTluW1QONCh8N8iT26NL6aAeDLWF5jxLmA5Zv3K")
+            .Build();
+    }
+    
+    private static IPaymentsRepository CreatePaymentsRepository(IServiceProvider serviceProvider)
+    {
+        var settings = serviceProvider.GetService<Settings.Settings>();
+        var logger = serviceProvider.GetService<ILoggerFactory>().CreateLogger<PaymentsRepository>();
+
+        return new PaymentsRepository(
+            settings.ClientsConnectionString,
+            logger
+        );
+    }
+
+    private static IStatisticsRepository CreateStatisticsRepository(IServiceProvider serviceProvider)
+    {
+        var settings = serviceProvider.GetService<Settings.Settings>();
+        var logger = serviceProvider.GetService<ILoggerFactory>().CreateLogger<StatisticsRepository>();
+
+        return new StatisticsRepository(
+            settings.ClientsConnectionString,
+            logger
+        );
+    }
     
     private static IServiceCollection AddRepositories(this IServiceCollection serviceCollection)
     {
         return serviceCollection
             .AddSingleton(CreateClientsRepository)
             .AddSingleton(CreateVisitsRepository)
-            .AddSingleton(CreateSubscriptionsRepository);
+            .AddSingleton(CreateSubscriptionsRepository)
+            .AddSingleton(CreatePaymentsRepository)
+            .AddSingleton(CreateStatisticsRepository);
     }
 }

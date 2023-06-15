@@ -6,6 +6,10 @@ namespace Club.Repository.Repositories.Interfaces;
 public interface ISubscriptionsRepository
 {
     Task Add(Subscription subscription, TimeSpan timeout);
+
+    Task<IEnumerable<Subscription>> GetAllSubscriptions(TimeSpan timeout);
+
+    Task<IEnumerable<Subscription>> GetSubscriptions(ICollection<Guid> ids, TimeSpan timeout);
     
     Task<Subscription> GetSubscriptionById(Guid id, TimeSpan timeout);
     

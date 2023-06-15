@@ -1,12 +1,15 @@
-﻿namespace Club.Models.Documents;
+﻿using Club.Models.Documents;
+using Club.Models.Persons;
 
-public class Payment
+namespace Club.Logic.Models;
+
+public class PaymentFullInfo
 {
     public int Id { get; set; }
     
-    public Guid ClientId { get; set; }
+    public Client Client { get; set; }
     
-    public Guid SubscriptionId { get; set; }
+    public Subscription Subscription { get; set; }
 
     public DateTime PaymentDate { get; set; }
 
